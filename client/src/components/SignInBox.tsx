@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { emailIcon, googleIcon } from "../assets/icons";
 import { httpRequest } from "../interceptor/axiosInterceptor";
 import { neonAuthUrl, url } from "../baseUrl";
+import { createAuthClient } from "@neondatabase/auth";
 import { useAuth, User } from "../contexts/Auth";
 
 type SignInBoxType = {
@@ -44,6 +45,7 @@ export default function SignInBox({ message, typeOfLogin }: SignInBoxType) {
   }
   const navigate = useNavigate();
   const { handleUser } = useAuth();
+  const neonClient = neonAuthUrl ? createAuthClient(neonAuthUrl) : null;
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -62,20 +64,11 @@ export default function SignInBox({ message, typeOfLogin }: SignInBoxType) {
         : { email: email.trim().toLowerCase(), password, callbackURL: "/" };
       const response = url
         ? await httpRequest.post(`${url}/auth/email`, payload)
-        : await fetch(`${neonAuthUrl.replace(/\/$/, "")}/${isSignUp ? "sign-up/email" : "sign-in/email"}`, {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify(payload),
-          }).then(async (result) => {
-            const data = await result.json().catch(() => ({}));
-            if (!result.ok) {
-              throw Object.assign(new Error("Neon Auth request failed"), {
-                response: { data, status: result.status },
-              });
-            }
-            return { data };
-          });
+        : isSignUp
+          ? await neonClient?.signUp.email({ name, email, password })
+          : await neonClient?.signIn.email({ email, password });
+      if (!response) throw new Error("Authentication service is not configured.");
+      if (response.error) throw Object.assign(new Error("Neon Auth request failed"), { response: { data: response.error } });
       const sessionToken = response.data.access_token ?? response.data.token;
       if (sessionToken) localStorage.setItem("access_token", JSON.stringify(sessionToken));
       if (response.data.refresh_token) localStorage.setItem("refresh_token", JSON.stringify(response.data.refresh_token));
