@@ -58,8 +58,8 @@ export default function SignInBox({ message, typeOfLogin }: SignInBoxType) {
     try {
       const isSignUp = typeOfLogin === "Sign up";
       const payload = isSignUp
-        ? { name: name.trim(), email: email.trim().toLowerCase(), password }
-        : { email: email.trim().toLowerCase(), password };
+        ? { name: name.trim(), email: email.trim().toLowerCase(), password, callbackURL: "/" }
+        : { email: email.trim().toLowerCase(), password, callbackURL: "/" };
       const response = url
         ? await httpRequest.post(`${url}/auth/email`, payload)
         : await fetch(`${neonAuthUrl.replace(/\/$/, "")}/${isSignUp ? "sign-up/email" : "sign-in/email"}`, {
@@ -68,8 +68,12 @@ export default function SignInBox({ message, typeOfLogin }: SignInBoxType) {
             headers: { "Content-Type": "application/json", Accept: "application/json" },
             body: JSON.stringify(payload),
           }).then(async (result) => {
-            const data = await result.json();
-            if (!result.ok) throw Object.assign(new Error("Neon Auth request failed"), { response: { data } });
+            const data = await result.json().catch(() => ({}));
+            if (!result.ok) {
+              throw Object.assign(new Error("Neon Auth request failed"), {
+                response: { data, status: result.status },
+              });
+            }
             return { data };
           });
       const sessionToken = response.data.access_token ?? response.data.token;
@@ -84,7 +88,12 @@ export default function SignInBox({ message, typeOfLogin }: SignInBoxType) {
       } as User);
       navigate("/");
     } catch (requestError: any) {
-      const message = requestError.response?.data?.message ?? requestError.response?.data?.error;
+      const responseData = requestError.response?.data;
+      const message =
+        responseData?.message ??
+        responseData?.error?.message ??
+        responseData?.error ??
+        responseData?.code;
       setError(
         message ||
           (neonAuthUrl
