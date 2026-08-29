@@ -62,11 +62,13 @@ export default function SignInBox({ message, typeOfLogin }: SignInBoxType) {
       const payload = isSignUp
         ? { name: name.trim(), email: email.trim().toLowerCase(), password, callbackURL: "/" }
         : { email: email.trim().toLowerCase(), password, callbackURL: "/" };
-      const response = url
-        ? await httpRequest.post(`${url}/auth/email`, payload)
-        : isSignUp
-          ? await neonClient?.signUp.email({ name, email, password })
-          : await neonClient?.signIn.email({ email, password });
+      const response = neonClient
+        ? isSignUp
+          ? await neonClient.signUp.email({ name: name.trim(), email: email.trim().toLowerCase(), password })
+          : await neonClient.signIn.email({ email: email.trim().toLowerCase(), password })
+        : url
+          ? await httpRequest.post(`${url}/auth/email`, payload)
+          : null;
       if (!response) throw new Error("Authentication service is not configured.");
       const authResponse = response as any;
       if (authResponse.error) throw Object.assign(new Error("Neon Auth request failed"), { response: { data: authResponse.error } });
