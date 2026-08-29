@@ -5,7 +5,7 @@ import { useEffect } from "react";
 
 const MESSAGE_MAP = new Map([
   ["in", { message: "Welcome again", typeOfLogin: "Sign in" }],
-  ["new", { message: "Join Medium", typeOfLogin: "Sign up" }],
+  ["new", { message: "Join Faundry", typeOfLogin: "Sign up" }],
   [
     "write",
     { message: "Create an account to start writing.", typeOfLogin: "Sign in" },

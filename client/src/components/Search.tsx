@@ -40,7 +40,7 @@ export default function Search() {
           backgroundColor: "transparent",
         }}
         type="text"
-        placeholder="Search Medium"
+        placeholder="Search Faundry"
       />
     </div>
   );

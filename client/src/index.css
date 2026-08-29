@@ -8,7 +8,41 @@ body {
 }
 
 :root {
-  --borderColor: rgba(242, 242, 242, 1)
+  --borderColor: rgba(242, 242, 242, 1);
+  --faundry-ink: #171717;
+  --faundry-accent: #1a8917;
+}
+
+.faundry-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  margin: 18px 0 24px;
+  padding: 16px 0;
+  border-top: 1px solid var(--borderColor);
+  border-bottom: 1px solid var(--borderColor);
+}
+
+.faundry-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 92px;
+}
+
+.faundry-stat strong {
+  color: var(--faundry-ink);
+  font-family: 'Poppins', sans-serif;
+  font-size: 24px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.faundry-stat span {
+  color: #757575;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .container {
