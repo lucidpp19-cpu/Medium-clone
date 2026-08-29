@@ -59,7 +59,9 @@ export default function SignInBox({ message, typeOfLogin }: SignInBoxType) {
       const isSignUp = typeOfLogin === "Sign up";
       const response = await httpRequest.post(
         url ? `${url}/auth/email` : `${neonAuthUrl}/${isSignUp ? "sign-up/email" : "sign-in/email"}`,
-        isSignUp ? { name, email, password } : { email, password },
+        isSignUp
+          ? { name, email, password, callbackURL: window.location.origin }
+          : { email, password, callbackURL: window.location.origin },
         url ? undefined : { withCredentials: true }
       );
       const sessionToken = response.data.access_token ?? response.data.token;
@@ -75,7 +77,12 @@ export default function SignInBox({ message, typeOfLogin }: SignInBoxType) {
       navigate("/");
     } catch (requestError: any) {
       const message = requestError.response?.data?.message ?? requestError.response?.data?.error;
-      setError(message || (neonAuthUrl ? "Neon Auth rejected the request. Check the email and password." : "Authentication service is not configured."));
+      setError(
+        message ||
+          (neonAuthUrl
+            ? "Neon Auth rejected the request. Check the email, password, and that this preview URL is trusted."
+            : "Authentication service is not configured.")
+      );
     } finally {
       setLoading(false);
     }
