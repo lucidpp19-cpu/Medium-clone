@@ -58,8 +58,8 @@ export default function SignInBox({ message, typeOfLogin }: SignInBoxType) {
     try {
       const isSignUp = typeOfLogin === "Sign up";
       const payload = isSignUp
-        ? { name, email, password, callbackURL: window.location.origin }
-        : { email, password, callbackURL: window.location.origin };
+        ? { name: name.trim(), email: email.trim().toLowerCase(), password }
+        : { email: email.trim().toLowerCase(), password };
       const response = url
         ? await httpRequest.post(`${url}/auth/email`, payload)
         : await fetch(`${neonAuthUrl.replace(/\/$/, "")}/${isSignUp ? "sign-up/email" : "sign-in/email"}`, {
