@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState, type FormEvent } from "react";
 import { emailIcon, googleIcon } from "../assets/icons";
 import { httpRequest } from "../interceptor/axiosInterceptor";
-import { url } from "../baseUrl";
+import { neonAuthUrl, url } from "../baseUrl";
 import { useAuth, User } from "../contexts/Auth";
 
 type SignInBoxType = {
@@ -56,17 +56,26 @@ export default function SignInBox({ message, typeOfLogin }: SignInBoxType) {
     setError("");
     setLoading(true);
     try {
-      const response = await httpRequest.post(`${url}/auth/email`, {
-        email,
-        password,
-        ...(typeOfLogin === "Sign up" ? { name } : {}),
-      });
-      localStorage.setItem("access_token", JSON.stringify(response.data.access_token));
-      localStorage.setItem("refresh_token", JSON.stringify(response.data.refresh_token));
-      handleUser(response.data.user as User);
+      const isSignUp = typeOfLogin === "Sign up";
+      const response = await httpRequest.post(
+        url ? `${url}/auth/email` : `${neonAuthUrl}/${isSignUp ? "sign-up/email" : "sign-in/email"}`,
+        isSignUp ? { name, email, password } : { email, password },
+        url ? undefined : { withCredentials: true }
+      );
+      const sessionToken = response.data.access_token ?? response.data.token;
+      if (sessionToken) localStorage.setItem("access_token", JSON.stringify(sessionToken));
+      if (response.data.refresh_token) localStorage.setItem("refresh_token", JSON.stringify(response.data.refresh_token));
+      const authUser = response.data.user;
+      handleUser({
+        ...authUser,
+        _id: authUser?._id ?? authUser?.id,
+        name: authUser?.name ?? name,
+        email: authUser?.email ?? email,
+      } as User);
       navigate("/");
     } catch (requestError: any) {
-      setError(requestError.response?.data?.message ?? "Could not complete authentication");
+      const message = requestError.response?.data?.message ?? requestError.response?.data?.error;
+      setError(message || (neonAuthUrl ? "Neon Auth rejected the request. Check the email and password." : "Authentication service is not configured."));
     } finally {
       setLoading(false);
     }

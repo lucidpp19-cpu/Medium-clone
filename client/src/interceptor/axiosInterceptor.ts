@@ -9,10 +9,11 @@ interface CustomAxiosConfig extends InternalAxiosRequestConfig<any> {
 
 axiosInstance.interceptors.request.use(
   async (config: CustomAxiosConfig) => {
+    const rawToken = localStorage.getItem("access_token");
+    const token = rawToken ? JSON.parse(rawToken) : null;
     config.headers = {
-      Authorization: `Bearer ${JSON.parse(
-        localStorage.getItem("access_token")!
-      )}`,
+      ...config.headers,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
     return config;
   },
@@ -27,7 +28,7 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config;
 
     if (
-      error.response.status === 401 &&
+      error.response?.status === 401 &&
       error.response.data.message === "UnAuthorized, JWT Expired"
     ) {
       const refreshToken = localStorage.getItem("refresh_token");
