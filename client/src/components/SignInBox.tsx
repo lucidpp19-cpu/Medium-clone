@@ -57,13 +57,21 @@ export default function SignInBox({ message, typeOfLogin }: SignInBoxType) {
     setLoading(true);
     try {
       const isSignUp = typeOfLogin === "Sign up";
-      const response = await httpRequest.post(
-        url ? `${url}/auth/email` : `${neonAuthUrl}/${isSignUp ? "sign-up/email" : "sign-in/email"}`,
-        isSignUp
-          ? { name, email, password, callbackURL: window.location.origin }
-          : { email, password, callbackURL: window.location.origin },
-        url ? undefined : { withCredentials: true }
-      );
+      const payload = isSignUp
+        ? { name, email, password, callbackURL: window.location.origin }
+        : { email, password, callbackURL: window.location.origin };
+      const response = url
+        ? await httpRequest.post(`${url}/auth/email`, payload)
+        : await fetch(`${neonAuthUrl.replace(/\/$/, "")}/${isSignUp ? "sign-up/email" : "sign-in/email"}`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify(payload),
+          }).then(async (result) => {
+            const data = await result.json();
+            if (!result.ok) throw Object.assign(new Error("Neon Auth request failed"), { response: { data } });
+            return { data };
+          });
       const sessionToken = response.data.access_token ?? response.data.token;
       if (sessionToken) localStorage.setItem("access_token", JSON.stringify(sessionToken));
       if (response.data.refresh_token) localStorage.setItem("refresh_token", JSON.stringify(response.data.refresh_token));
