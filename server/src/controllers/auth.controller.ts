@@ -7,9 +7,45 @@ import env from "../utils/envalid";
 import Token from "../models/token";
 import { JWTPayload } from "../middlewares/auth";
 import ServerError from "../utils/ServerError";
+import bcrypt from "bcryptjs";
 
-//todo
-export const emailLogin = asyncHandler((req, res, next) => {});
+function createAuthTokens(userId: string) {
+  return {
+    access_token: jwt.sign({ _id: userId }, env.JWT_SECRET, { expiresIn: "30m" }),
+    refresh_token: jwt.sign({ _id: userId }, env.JWT_REFRESH_SECRET),
+  };
+}
+
+export const emailLogin = asyncHandler(async (req, res) => {
+  const { email, password, name } = req.body;
+  if (typeof email !== "string" || typeof password !== "string" || password.length < 8) {
+    throw new ServerError(400, "Enter a valid email and a password with at least 8 characters");
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const existingUser = await User.findOne({ email: normalizedEmail }).select("+passwordHash");
+
+  if (name) {
+    if (existingUser) throw new ServerError(409, "An account with this email already exists");
+    const user = await User.create({
+      email: normalizedEmail,
+      name: String(name).trim().slice(0, 80) || normalizedEmail.split("@")[0],
+      passwordHash: await bcrypt.hash(password, 12),
+      lists: [{ name: "Reading list", posts: [], images: [] }],
+    });
+    const tokens = createAuthTokens(String(user._id));
+    await Token.create({ token: tokens.refresh_token });
+    res.status(201).json({ user, ...tokens });
+    return;
+  }
+
+  if (!existingUser?.passwordHash || !(await bcrypt.compare(password, existingUser.passwordHash))) {
+    throw new ServerError(401, "Invalid email or password");
+  }
+  const tokens = createAuthTokens(String(existingUser._id));
+  await Token.create({ token: tokens.refresh_token });
+  res.json({ user: existingUser, ...tokens });
+});
 
 export const tokenRefresh = asyncHandler((req, res, next) => {
   const { token } = req.body;

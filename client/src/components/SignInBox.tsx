@@ -1,5 +1,9 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState, type FormEvent } from "react";
 import { emailIcon, googleIcon } from "../assets/icons";
+import { httpRequest } from "../interceptor/axiosInterceptor";
+import { url } from "../baseUrl";
+import { useAuth, User } from "../contexts/Auth";
 
 type SignInBoxType = {
   message?: string;
@@ -38,7 +42,35 @@ export default function SignInBox({ message, typeOfLogin }: SignInBoxType) {
     const qs = new URLSearchParams(options);
     window.location.assign(`${rootUrl}?${qs.toString()}`);
   }
-  function handleEmailLogin() {}
+  const navigate = useNavigate();
+  const { handleUser } = useAuth();
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleEmailLogin(event?: FormEvent) {
+    event?.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const response = await httpRequest.post(`${url}/auth/email`, {
+        email,
+        password,
+        ...(typeOfLogin === "Sign up" ? { name } : {}),
+      });
+      localStorage.setItem("access_token", JSON.stringify(response.data.access_token));
+      localStorage.setItem("refresh_token", JSON.stringify(response.data.refresh_token));
+      handleUser(response.data.user as User);
+      navigate("/");
+    } catch (requestError: any) {
+      setError(requestError.response?.data?.message ?? "Could not complete authentication");
+    } finally {
+      setLoading(false);
+    }
+  }
   return (
     <div
       style={{
@@ -61,14 +93,24 @@ export default function SignInBox({ message, typeOfLogin }: SignInBoxType) {
       >
         {message}
       </p>
+      {error && <p style={{ color: "#b42318", fontSize: "14px" }}>{error}</p>}
+      {showEmailForm && (
+        <form onSubmit={handleEmailLogin} style={{ display: "flex", flexDirection: "column", gap: "10px", width: "280px" }}>
+          {typeOfLogin === "Sign up" && <input aria-label="Name" placeholder="Name" value={name} onChange={(event) => setName(event.target.value)} required />}
+          <input aria-label="Email" type="email" placeholder="Email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+          <input aria-label="Password" type="password" placeholder="Password (8+ characters)" minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} required />
+          <button type="submit" disabled={loading}>{loading ? "Working..." : typeOfLogin}</button>
+        </form>
+      )}
       {SIGNIN_OPTIONS.map((item) => {
         return (
           <ButtonLoginWith
             image={item.image}
             key={item.id}
-            onClick={
-              item.handler == "Google" ? handleGoogleAuth : handleEmailLogin
-            }
+            onClick={() => {
+              if (item.handler === "Google") handleGoogleAuth();
+              else setShowEmailForm(true);
+            }}
             text={typeOfLogin + " " + item.title}
           />
         );
