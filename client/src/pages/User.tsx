@@ -11,6 +11,7 @@ import { useAuth } from "../contexts/Auth";
 import { httpRequest } from "../interceptor/axiosInterceptor";
 import AboutSection from "../components/AboutSection";
 import SavedSection from "../components/SavedSection";
+import { OdometerRow } from "../components/Odometer";
 import UserCard from "../components/UserCard";
 import { toTitleCase } from "../utils/helper";
 import ListSection from "../components/ListSection";
@@ -68,7 +69,7 @@ export default function User() {
     queryFn: () => httpRequest.get(`${url}/user/${id}`),
     queryKey: ["user", id],
     onSuccess: (data) => {
-      document.title = data.data.name + " - Medium";
+      document.title = data.data.name + " - Faundry";
       setOptionsTab(() => {
         if (user?._id === id)
           return USER_PAGE_TAB_OPTIONS_AUTH.map((item) => {
@@ -247,6 +248,13 @@ export default function User() {
               <h1 style={{ fontSize: "40px" }}>{data?.data?.name}</h1>
               <span style={{ color: "gray" }}>{moreIcon}</span>
             </div>
+            <OdometerRow
+              stats={[
+                { value: data?.data?.followers?.length ?? 0, label: "followers" },
+                { value: data?.data?.followings?.length ?? 0, label: "following" },
+                { value: tab === "lists" ? posts.length : 0, label: "saved stories" },
+              ]}
+            />
             <Tab options={optionsTab} activeTab={tab ?? "home"} />
             <span style={{ marginTop: "-20px" }}>{""}</span>
             {!tab &&

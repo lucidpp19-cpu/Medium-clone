@@ -35,7 +35,7 @@ export default function Write() {
 
   useEffect(() => {
     hideNavbar(true);
-    document.title = "New story -Medium";
+    document.title = "New story - Faundry";
     return () => hideNavbar(false);
   }, []);
 

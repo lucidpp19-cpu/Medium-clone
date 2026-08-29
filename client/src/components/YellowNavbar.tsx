@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import completeLogo from "../assets/logo.png";
 
 export default function YellowNavbar() {
   return (
@@ -23,7 +22,7 @@ export default function YellowNavbar() {
       >
         <div className="left_cont_nav_un">
           <Link to="/">
-            <img className="logo_img" src={completeLogo} alt="" />
+            <img className="logo_img" src="/logo.png" alt="Faundry" />
           </Link>
         </div>
         <div

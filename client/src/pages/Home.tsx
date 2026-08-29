@@ -24,7 +24,7 @@ export default function Home() {
 function HomeContainer({ tag }: { tag: string }) {
   const { isAuthenticated } = useAuth();
   const [posts, setposts] = useState<Array<any>>([]);
-  document.title = "Medium";
+  document.title = "Faundry";
   useQuery({
     queryFn: () => httpRequest.get(`${url}/post/home`),
     queryKey: ["home", "no"],

@@ -289,7 +289,7 @@ export function GetStarted({
         ...style,
       }}
     >
-      <p style={{ marginBottom: "12px", ...topStyle }}>Get started on Medium</p>
+      <p style={{ marginBottom: "12px", ...topStyle }}>Get started on Faundry</p>
       <Link
         to="/signin/new"
         style={{
