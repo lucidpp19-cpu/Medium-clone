@@ -68,11 +68,13 @@ export default function SignInBox({ message, typeOfLogin }: SignInBoxType) {
           ? await neonClient?.signUp.email({ name, email, password })
           : await neonClient?.signIn.email({ email, password });
       if (!response) throw new Error("Authentication service is not configured.");
-      if (response.error) throw Object.assign(new Error("Neon Auth request failed"), { response: { data: response.error } });
-      const sessionToken = response.data.access_token ?? response.data.token;
+      const authResponse = response as any;
+      if (authResponse.error) throw Object.assign(new Error("Neon Auth request failed"), { response: { data: authResponse.error } });
+      const responseData = authResponse.data ?? authResponse;
+      const sessionToken = responseData.access_token ?? responseData.token;
       if (sessionToken) localStorage.setItem("access_token", JSON.stringify(sessionToken));
-      if (response.data.refresh_token) localStorage.setItem("refresh_token", JSON.stringify(response.data.refresh_token));
-      const authUser = response.data.user;
+      if (responseData.refresh_token) localStorage.setItem("refresh_token", JSON.stringify(responseData.refresh_token));
+      const authUser = responseData.user;
       handleUser({
         ...authUser,
         _id: authUser?._id ?? authUser?.id,
