@@ -57,8 +57,8 @@ export default function SignInBox({ message, typeOfLogin }: SignInBoxType) {
     event?.preventDefault();
     setError("");
     setLoading(true);
+    const isSignUp = typeOfLogin === "Sign up";
     try {
-      const isSignUp = typeOfLogin === "Sign up";
       const payload = isSignUp
         ? { name: name.trim(), email: email.trim().toLowerCase(), password, callbackURL: "/" }
         : { email: email.trim().toLowerCase(), password, callbackURL: "/" };
@@ -84,11 +84,30 @@ export default function SignInBox({ message, typeOfLogin }: SignInBoxType) {
       navigate("/");
     } catch (requestError: any) {
       const responseData = requestError.response?.data;
+      const errorData = responseData?.error ?? responseData;
+      const code = errorData?.code ?? requestError.code;
       const message =
+        errorData?.message ??
         responseData?.message ??
-        responseData?.error?.message ??
-        responseData?.error ??
-        responseData?.code;
+        (typeof errorData === "string" ? errorData : null) ??
+        requestError.message;
+
+      if (isSignUp && code === "USER_ALREADY_EXISTS" && neonClient) {
+        try {
+          const signInResponse = await neonClient.signIn.email({ email: email.trim().toLowerCase(), password });
+          const signInData = (signInResponse as any).data ?? signInResponse;
+          handleUser({
+            ...(signInData.user ?? {}),
+            _id: signInData.user?._id ?? signInData.user?.id,
+            email: signInData.user?.email ?? email,
+          } as User);
+          navigate("/");
+          return;
+        } catch {
+          // Fall through to the useful error below.
+        }
+      }
+
       setError(
         message ||
           (neonAuthUrl
