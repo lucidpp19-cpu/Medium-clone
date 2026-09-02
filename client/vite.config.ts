@@ -7,6 +7,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
+      strictPort: true,
       proxy: {
         '/neon-auth': {
           target: env.VITE_NEON_AUTH_URL ? new URL(env.VITE_NEON_AUTH_URL).origin : undefined,
