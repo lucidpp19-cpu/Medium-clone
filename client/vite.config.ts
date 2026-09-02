@@ -7,14 +7,17 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
-    proxy: {
-      '/neon-auth': {
-        target: env.VITE_NEON_AUTH_URL,
-        changeOrigin: true,
-        secure: true,
-        rewrite: (path) => path.replace(/^\/neon-auth/, ''),
+      proxy: {
+        '/neon-auth': {
+          target: env.VITE_NEON_AUTH_URL ? new URL(env.VITE_NEON_AUTH_URL).origin : undefined,
+          changeOrigin: true,
+          secure: true,
+          rewrite: (path) => {
+            const authPath = env.VITE_NEON_AUTH_URL ? new URL(env.VITE_NEON_AUTH_URL).pathname.replace(/\/$/, '') : ''
+            return `${authPath}${path.replace(/^\/neon-auth/, '')}`
+          },
+        },
       },
     },
-  },
   }
 })
